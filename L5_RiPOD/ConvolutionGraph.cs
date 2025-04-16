@@ -1,4 +1,5 @@
-﻿using System;
+﻿using L5_RiPOD.Model;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,12 +9,7 @@ namespace L5_RiPOD
 {
    class ConvolutionGraph
     {
-        public int OperationsCount;
-        public int TypesCount;
-        public int[][] ArrayTypes;
-        private int[] ProcessorsByTypesCount;
-        private int[] TimeCalculationByTypes;
-        public int[][] ArrayH;
+        public EntityData entityData { get; set; } = new EntityData();
         public List<List<int>> List_chains = new List<List<int>>();
 
         public List<List<Operation>> StepList = new List<List<Operation>>();
@@ -21,76 +17,22 @@ namespace L5_RiPOD
 
         public ConvolutionGraph()
         {
-            OperationsCount = 0;
-            TypesCount = 0;
-            ArrayH = null;
-            ArrayTypes = null;
-            ProcessorsByTypesCount = null;
+
+            entityData.OperationsCount = 0;
+            entityData.TypesCount = 0;
+            entityData.ArrayH = null;
+            entityData.ArrayTypes = null;
+            entityData.ProcessorsByTypesCount = null;
         }
 
-        public void File_Load(string filestr)
+        public void File_Load(EntityData data)
         {
-            // получение данных из файла
-
-            StreamReader file = new StreamReader(filestr);
-            //step 1 чтение кол-ва операций
-            string buff = "";
-            buff = file.ReadLine();
-
-            buff = Find_value(buff);
-            OperationsCount = Convert.ToInt32(buff);
-
-            //step 2 чтение кол-ва типов операций
-            buff = "";
-            buff = file.ReadLine();
-            buff = Find_value(buff);
-            TypesCount = Convert.ToInt32(buff);
-
-            //step 3 чтение операций каждого типа
-            ArrayTypes = new int[TypesCount][];
-            for (int i = 0; i < TypesCount; i++)
-            {
-                buff = "";
-                buff = file.ReadLine();
-                buff = Find_value(buff);
-                ArrayTypes[i] = GetArray(buff);
-            }
-
-            //step 4 чтение количества процессоров каждого типа
-            ProcessorsByTypesCount = new int[TypesCount];
-            for (int i = 0; i < TypesCount; i++)
-            {
-                buff = "";
-                buff = file.ReadLine();
-                buff = Find_value(buff);
-                ProcessorsByTypesCount[i] = Convert.ToInt32(buff);
-            }
-
-
-            //step 5 чтение времени выполнения операции каждого типа
-            TimeCalculationByTypes = new int[TypesCount];
-            for (int i = 0; i < TypesCount; i++)
-            {
-                buff = "";
-                buff = file.ReadLine();
-                buff = Find_value(buff);
-                TimeCalculationByTypes[i] = Convert.ToInt32(buff);
-            }
-
-            //step 6 чтение таблицы смежности
-            buff = "";
-            buff = file.ReadLine();
-
-            ArrayH = new int[OperationsCount][];
-
-            for (int i = 0; i < OperationsCount; i++)
-            {
-                buff = "";
-                buff = file.ReadLine();
-                ArrayH[i] = GetArray(buff);
-            }
-
-            file.Close();
+            entityData.OperationsCount = data.OperationsCount;
+            entityData.TypesCount = data.TypesCount;
+            entityData.ArrayTypes = data.ArrayTypes;
+            entityData.ProcessorsByTypesCount = data.ProcessorsByTypesCount;
+            entityData.TimeCalculationByTypes = data.TimeCalculationByTypes;
+            entityData.ArrayH = data.ArrayH;
         }
 
         public void Planning()
@@ -111,7 +53,7 @@ namespace L5_RiPOD
             List<int> chain = new List<int>();
             int operation = 0;
 
-            while (listUse.Count < OperationsCount)
+            while (listUse.Count < entityData.OperationsCount)
             {
                 operation = 0;
                 while (listUse.Contains(operation))
@@ -126,9 +68,9 @@ namespace L5_RiPOD
                 {
                     // найти в строке таблицы смежности следующее направление
                     bool index = false;
-                    for (int i = 0; i < ArrayH[operation].Length; i++)
+                    for (int i = 0; i < entityData.ArrayH[operation].Length; i++)
                     {
-                        if (ArrayH[operation][i] == 1)
+                        if (entityData.ArrayH[operation][i] == 1)
                         {
                             index = true;
                             operation = i;
@@ -182,18 +124,18 @@ namespace L5_RiPOD
         {
             List<Operation> operations = new List<Operation>();
 
-            for (int i = 0; i < OperationsCount; i++)
+            for (int i = 0; i < entityData.OperationsCount; i++)
             {
                 Operation op = new Operation();
                 int type = FindType(i + 1); 
                 op.Value = (i + 1).ToString();
                 op.StateBlock = op.Value.ToString();
-                op.TimeCalculation = TimeCalculationByTypes[type];
+                op.TimeCalculation = entityData.TimeCalculationByTypes[type];
 
                 op.VectorList = new List<int>();
                 op.ConnectionList = new List<string>();
 
-                for (int k = 0; k < TypesCount; k++)
+                for (int k = 0; k < entityData.TypesCount; k++)
                 {
                     op.VectorList.Add(k == type ? 1 : 0);
                 }
@@ -222,9 +164,9 @@ namespace L5_RiPOD
         private int FindType(int value)
         {
             int res = -1;
-            for (int i = 0; i < TypesCount; i++)
+            for (int i = 0; i < entityData.TypesCount; i++)
             {
-                if (ArrayTypes[i].Contains(value))
+                if (entityData.ArrayTypes[i].Contains(value))
                 {
                     res = i;
                     break;
@@ -288,7 +230,7 @@ namespace L5_RiPOD
                             }
                         }
                         countMissedConnections++;
-                        if (countMissedConnections > OperationsCount)
+                        if (countMissedConnections > entityData.OperationsCount)
                             break;
                     }
                 }
@@ -516,7 +458,7 @@ namespace L5_RiPOD
         {
             for (var i = 0; i < obj1.Count; i++)
             {
-                if ((obj1[i] + obj2[i]) > ProcessorsByTypesCount[i])
+                if ((obj1[i] + obj2[i]) > entityData.ProcessorsByTypesCount[i])
                 {
                     return false;
                 }

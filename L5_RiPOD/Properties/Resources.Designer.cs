@@ -59,5 +59,25 @@ namespace L5_RiPOD.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Byte[].
+        /// </summary>
+        internal static byte[] data1 {
+            get {
+                object obj = ResourceManager.GetObject("data1", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Byte[].
+        /// </summary>
+        internal static byte[] data2 {
+            get {
+                object obj = ResourceManager.GetObject("data2", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
