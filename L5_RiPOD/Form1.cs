@@ -158,8 +158,9 @@ namespace L5_RiPOD
                 value++;
             }
 
-            if (value == convolution.StepList.Count)
+            if (value >= convolution.StepList.Count - 1)
             {
+                value = convolution.StepList.Count - 1;
                 buttonNext.Enabled = false;
             }
             else
@@ -167,8 +168,14 @@ namespace L5_RiPOD
                 buttonNext.Enabled = true;
             }
 
+            buttonPrev.Enabled = value > 0;
+
             textBox1.Text = value.ToString();
             label3.Text = "Граф на шаге " + value + ":";
+
+            // 👉 Отображаем текст графа
+            DrawGraph dgGraph = new DrawGraph(textBoxOutput, convolution.StepList[value]);
+            dgGraph.DrawTextInfo();
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -197,21 +204,11 @@ namespace L5_RiPOD
                 buttonNext.Enabled = true;
             }
 
-            pictureBox1.Refresh();
+
 
            
         }
 
-        private void pictureBox1_Paint(object sender, PaintEventArgs e)
-        {
-            int index;
-            if(Int32.TryParse(textBox1.Text, out index))
-            {
-                DrawGraph dgGraph = new DrawGraph((PictureBox) sender, 
-                    convolution.StepList[index], e.Graphics);
-                dgGraph.Draw();
-            }
-
-        }
+        
     }
 }
