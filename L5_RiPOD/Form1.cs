@@ -1,12 +1,15 @@
-﻿using System;
+﻿using L5_RiPOD.Model;
+using Newtonsoft.Json;
+using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace L5_RiPOD
 {
     public partial class Form1 : Form
     {
-        private ConvolutionGraph convolution;
+        private ConvolutionGraph convolution { get; set; } = new ConvolutionGraph();
         public int CurrentStep { get; set; }
 
         public Form1()
@@ -16,10 +19,20 @@ namespace L5_RiPOD
 
         private void button1_Click(object sender, EventArgs e)
         {
+
+            string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "data1.json");
+            string json = File.ReadAllText(fullPath);
+            EntityData data = JsonConvert.DeserializeObject<EntityData>(json);
+
             convolution = new ConvolutionGraph();
-            convolution.File_Load("start_param.txt");
+            convolution.File_Load(data);
             convolution.Planning();
             WriteResults();
+
+
+            // 👉 Отображаем текст графа
+            DrawGraph dgGraph = new DrawGraph(textBoxOutput, convolution.StepList[0]);
+            dgGraph.DrawTextInfo();
         }
 
         private void WriteResults()
@@ -45,13 +58,13 @@ namespace L5_RiPOD
         {
             // типы операций
 
-            dataGridView1.ColumnCount = convolution.TypesCount + 1;
-            dataGridView1.RowCount = convolution.OperationsCount + 1;
+            dataGridView1.ColumnCount = convolution.entityData.TypesCount + 1;
+            dataGridView1.RowCount = convolution.entityData.OperationsCount + 1;
             dataGridView1.Rows[0].Cells[0].Value = "Operation \\  type";
             dataGridView1.ColumnHeadersVisible = false;
             dataGridView1.RowHeadersVisible = false;
 
-            for (int i = -1; i < convolution.TypesCount; i++)
+            for (int i = -1; i < convolution.entityData.TypesCount; i++)
             {
                 dataGridView1.Rows[0].Cells[i + 1].Style.BackColor = Color.FromArgb(110, 110, 110);
                 dataGridView1.Rows[0].Cells[i + 1].Style.ForeColor = Color.FromArgb(255, 255, 255);
@@ -62,7 +75,7 @@ namespace L5_RiPOD
                 }
             }
 
-            for (int i = 0; i < convolution.OperationsCount; i++)
+            for (int i = 0; i < convolution.entityData.OperationsCount; i++)
             {
                 dataGridView1.Rows[i + 1].Cells[0].Style.BackColor = Color.FromArgb(110, 110, 110);
                 dataGridView1.Rows[i + 1].Cells[0].Style.ForeColor = Color.FromArgb(255, 255, 255);
@@ -70,22 +83,22 @@ namespace L5_RiPOD
 
             }
 
-            for (int i = 0; i < convolution.TypesCount; i++)
+            for (int i = 0; i < convolution.entityData.TypesCount; i++)
             {
-                for (int k = 0; k < convolution.ArrayTypes[i].Length; k++)
+                for (int k = 0; k < convolution.entityData.ArrayTypes[i].Length; k++)
                 {
-                    dataGridView1.Rows[convolution.ArrayTypes[i][k]].Cells[i + 1].Style.BackColor = Color.FromArgb(82, 97, 160);
+                    dataGridView1.Rows[convolution.entityData.ArrayTypes[i][k]].Cells[i + 1].Style.BackColor = Color.FromArgb(82, 97, 160);
                 }
             }
 
             // матрица смежности
 
-            dataGridView2.ColumnCount = convolution.OperationsCount + 1;
-            dataGridView2.RowCount = convolution.OperationsCount + 1;
+            dataGridView2.ColumnCount = convolution.entityData.OperationsCount + 1;
+            dataGridView2.RowCount = convolution.entityData.OperationsCount + 1;
             dataGridView2.ColumnHeadersVisible = false;
             dataGridView2.RowHeadersVisible = false;
 
-            for (int i = 0; i < convolution.OperationsCount + 1; i++)
+            for (int i = 0; i < convolution.entityData.OperationsCount + 1; i++)
             {
                 // по вертикали
                 dataGridView2.Rows[i].Cells[0].Style.BackColor = Color.FromArgb(110, 110, 110);
@@ -101,11 +114,11 @@ namespace L5_RiPOD
 
             dataGridView2.Rows[0].Cells[0].Value = "Operation \\  operation";
 
-            for (int i = 0; i < convolution.OperationsCount; i++)
+            for (int i = 0; i < convolution.entityData.OperationsCount; i++)
             {
-                for (int k = 0; k < convolution.ArrayH[i].Length; k++)
+                for (int k = 0; k < convolution.entityData.ArrayH[i].Length; k++)
                 {
-                    if (convolution.ArrayH[i][k] == 1)
+                    if (convolution.entityData.ArrayH[i][k] == 1)
                     {
                         dataGridView2.Rows[i + 1].Cells[k + 1].Style.BackColor = Color.FromArgb(82, 97, 160);
                     }
@@ -133,8 +146,9 @@ namespace L5_RiPOD
                 value--;
             }
 
-            if (value == 0)
+            if (value <= 0)
             {
+                value = 0;
                 buttonPrev.Enabled = false;
             }
             else
@@ -142,9 +156,16 @@ namespace L5_RiPOD
                 buttonPrev.Enabled = true;
             }
 
+            buttonNext.Enabled = value < convolution.StepList.Count - 1;
+
             textBox1.Text = value.ToString();
             label3.Text = "Граф на шаге " + value + ":";
+
+            // 👉 Отображаем текст графа
+            DrawGraph dgGraph = new DrawGraph(textBoxOutput, convolution.StepList[value]);
+            dgGraph.DrawTextInfo();
         }
+
 
         private void buttonNext_Click(object sender, EventArgs e)
         {
@@ -158,8 +179,9 @@ namespace L5_RiPOD
                 value++;
             }
 
-            if (value == convolution.StepList.Count)
+            if (value >= convolution.StepList.Count - 1)
             {
+                value = convolution.StepList.Count - 1;
                 buttonNext.Enabled = false;
             }
             else
@@ -167,8 +189,14 @@ namespace L5_RiPOD
                 buttonNext.Enabled = true;
             }
 
+            buttonPrev.Enabled = value > 0;
+
             textBox1.Text = value.ToString();
             label3.Text = "Граф на шаге " + value + ":";
+
+            // 👉 Отображаем текст графа
+            DrawGraph dgGraph = new DrawGraph(textBoxOutput, convolution.StepList[value]);
+            dgGraph.DrawTextInfo();
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -197,21 +225,11 @@ namespace L5_RiPOD
                 buttonNext.Enabled = true;
             }
 
-            pictureBox1.Refresh();
+
 
            
         }
 
-        private void pictureBox1_Paint(object sender, PaintEventArgs e)
-        {
-            int index;
-            if(Int32.TryParse(textBox1.Text, out index))
-            {
-                DrawGraph dgGraph = new DrawGraph((PictureBox) sender, 
-                    convolution.StepList[index], e.Graphics);
-                dgGraph.Draw();
-            }
-
-        }
+        
     }
 }
