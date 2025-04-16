@@ -90,6 +90,9 @@
     <None Include="Resources\data1.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Resources\data3.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Resources\data2.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
